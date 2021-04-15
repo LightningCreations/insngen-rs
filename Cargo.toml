@@ -1,0 +1,2 @@
+[workspace]
+members=["insngen-core","insngen-proc_macro"]
