@@ -1,10 +1,11 @@
+use std::io::Read;
 use std::iter::{FromIterator, FusedIterator};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Literal {
     String(String),
     Character(char),
-    Integer(i128),
+    Integer(String),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -110,3 +111,12 @@ impl<'a> Iterator for IntoIter {
 
 impl FusedIterator for IntoIter {}
 impl ExactSizeIterator for IntoIter {}
+
+pub fn lex<R: Read>(input: R) -> std::io::Result<TokenStream> {
+    let mut stream = Vec::new();
+    let mut iter = input.bytes();
+    while let Some(c) = iter.next() {
+        stream.push(TokenTree::Punct(c? as char));
+    }
+    Ok(TokenStream { stream })
+}
