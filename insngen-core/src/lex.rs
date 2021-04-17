@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::io::{ErrorKind, Read};
 use std::iter::{FromIterator, FusedIterator};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -116,7 +116,18 @@ pub fn lex<R: Read>(input: R) -> std::io::Result<TokenStream> {
     let mut stream = Vec::new();
     let mut iter = input.bytes();
     while let Some(c) = iter.next() {
-        stream.push(TokenTree::Punct(c? as char));
+        stream.push(match c {
+            Ok(punct @ (b'.' | b',')) => TokenTree::Punct(punct as char),
+            Ok(start @ (b'A'..=b'Z' | b'a'..=b'z' | b'$' | b'_')) => {
+                let mut result = String::new();
+                result.push(start as char);
+                while let Some(Ok(c @ (b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'$' | b'_'))) = iter.next() {
+                    result.push(c as char);
+                }
+                TokenTree::Ident(result)
+            },
+            c => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Unexpected Character on Stream {:?}", c)))
+        });
     }
     Ok(TokenStream { stream })
 }
