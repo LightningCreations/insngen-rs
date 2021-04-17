@@ -121,12 +121,19 @@ pub fn lex<R: Read>(input: R) -> std::io::Result<TokenStream> {
             Ok(start @ (b'A'..=b'Z' | b'a'..=b'z' | b'$' | b'_')) => {
                 let mut result = String::new();
                 result.push(start as char);
-                while let Some(Ok(c @ (b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'$' | b'_'))) = iter.next() {
+                while let Some(Ok(c @ (b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'$' | b'_'))) =
+                    iter.next()
+                {
                     result.push(c as char);
                 }
                 TokenTree::Ident(result)
-            },
-            c => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Unexpected Character on Stream {:?}", c)))
+            }
+            c => {
+                return Err(std::io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Unexpected Character on Stream {:?}", c),
+                ))
+            }
         });
     }
     Ok(TokenStream { stream })
